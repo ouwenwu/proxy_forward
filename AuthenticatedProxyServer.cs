@@ -163,10 +163,17 @@ public sealed class AuthenticatedProxyServer : IDisposable
 
     private static string RemoveProxyAuthorization(string headerText)
     {
-        var lines = headerText.Split(["\r\n"], StringSplitOptions.None);
+        var headerEnd = headerText.IndexOf("\r\n\r\n", StringComparison.Ordinal);
+        var headerOnly = headerEnd >= 0 ? headerText[..headerEnd] : headerText;
+        var lines = headerOnly.Split(["\r\n"], StringSplitOptions.None);
         var builder = new StringBuilder();
         foreach (var line in lines)
         {
+            if (string.IsNullOrEmpty(line))
+            {
+                continue;
+            }
+
             if (line.StartsWith("Proxy-Authorization:", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
@@ -175,6 +182,7 @@ public sealed class AuthenticatedProxyServer : IDisposable
             builder.Append(line).Append("\r\n");
         }
 
+        builder.Append("\r\n");
         return builder.ToString();
     }
 

@@ -60,6 +60,17 @@ public sealed class MainForm : Form
         base.OnFormClosing(e);
     }
 
+    protected override void WndProc(ref Message m)
+    {
+        if (m.Msg == SingleInstance.ShowMainWindowMessage)
+        {
+            BeginInvoke(ShowFromTray);
+            return;
+        }
+
+        base.WndProc(ref m);
+    }
+
     private void BuildUi()
     {
         var root = new TableLayoutPanel
@@ -413,6 +424,9 @@ public sealed class MainForm : Form
     {
         Show();
         WindowState = FormWindowState.Normal;
+        BringToFront();
+        TopMost = true;
+        TopMost = false;
         Activate();
     }
 

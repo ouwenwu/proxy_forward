@@ -22,6 +22,9 @@ public sealed class ForwardConfig
     public int LocalPort { get; set; } = 7897;
     public string RemoteBindHost { get; set; } = "127.0.0.1";
     public int RemoteBindPort { get; set; } = 43897;
+    public bool ProxyAuthEnabled { get; set; }
+    public string ProxyAuthUsername { get; set; } = "";
+    public string EncryptedProxyAuthPassword { get; set; } = "";
     public string Notes { get; set; } = "";
 
     [JsonIgnore]
@@ -32,6 +35,9 @@ public sealed class ForwardConfig
 
     [JsonIgnore]
     public string DisplayRemote => $"{RemoteBindHost}:{RemoteBindPort}";
+
+    [JsonIgnore]
+    public string DisplayProxyAuth => ProxyAuthEnabled ? ProxyAuthUsername : "Off";
 }
 
 public enum ForwardState

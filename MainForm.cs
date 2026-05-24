@@ -101,6 +101,7 @@ public sealed class MainForm : Form
         AddColumn("Auth", "认证", 70);
         AddColumn("Local", "本机", 140);
         AddColumn("Remote", "服务器监听", 150);
+        AddColumn("ProxyAuth", "代理鉴权", 95);
         AddColumn("Status", "状态", 120);
         AddColumn("Message", "信息", 260);
 
@@ -380,6 +381,7 @@ public sealed class MainForm : Form
                 Auth = config.AuthMode == AuthMode.Password ? "密码" : "私钥",
                 Local = config.DisplayLocal,
                 Remote = config.DisplayRemote,
+                ProxyAuth = config.DisplayProxyAuth,
                 Status = StateText(status.State),
                 Message = status.Message
             });
@@ -450,6 +452,7 @@ public sealed class MainForm : Form
         public string Auth { get; set; } = "";
         public string Local { get; set; } = "";
         public string Remote { get; set; } = "";
+        public string ProxyAuth { get; set; } = "";
         public string Status { get; set; } = "";
         public string Message { get; set; } = "";
     }

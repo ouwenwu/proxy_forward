@@ -8,6 +8,7 @@ public sealed class ForwardSession : IDisposable
 {
     private SshClient? _client;
     private ForwardedPortRemote? _port;
+    private AuthenticatedProxyServer? _authProxy;
 
     public ForwardConfig Config { get; }
     public ForwardStatus Status { get; } = new();
@@ -32,6 +33,22 @@ public sealed class ForwardSession : IDisposable
             Stop();
 
             EnsureLocalEndpointAvailable();
+            var targetHost = Config.LocalHost;
+            var targetPort = Config.LocalPort;
+            if (Config.ProxyAuthEnabled)
+            {
+                var proxyPassword = SecretProtector.Unprotect(Config.EncryptedProxyAuthPassword);
+                if (string.IsNullOrWhiteSpace(Config.ProxyAuthUsername) || string.IsNullOrEmpty(proxyPassword))
+                {
+                    throw new InvalidOperationException("Proxy auth is enabled but username or password is empty.");
+                }
+
+                _authProxy = new AuthenticatedProxyServer(Config.LocalHost, Config.LocalPort, Config.ProxyAuthUsername, proxyPassword);
+                _authProxy.Start();
+                targetHost = "127.0.0.1";
+                targetPort = _authProxy.Port;
+            }
+
             _client = CreateClient();
             _client.KeepAliveInterval = TimeSpan.FromSeconds(30);
             _client.ConnectionInfo.Timeout = TimeSpan.FromSeconds(12);
@@ -40,8 +57,8 @@ public sealed class ForwardSession : IDisposable
             _port = new ForwardedPortRemote(
                 Config.RemoteBindHost,
                 (uint)Config.RemoteBindPort,
-                Config.LocalHost,
-                (uint)Config.LocalPort);
+                targetHost,
+                (uint)targetPort);
 
             _port.Exception += (_, args) =>
             {
@@ -93,6 +110,19 @@ public sealed class ForwardSession : IDisposable
         finally
         {
             _port = null;
+        }
+
+        try
+        {
+            _authProxy?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error($"Stop authenticated proxy failed: {Config.Name}", ex);
+        }
+        finally
+        {
+            _authProxy = null;
         }
 
         try
